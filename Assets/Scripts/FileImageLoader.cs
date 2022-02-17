@@ -23,13 +23,15 @@ public class FileImageLoader : MonoBehaviour
 
     public void Refresh()
     {
-        string basePath = $"{Application.dataPath}/{chosenFolderName}";
+        string basePath = Path.Combine(Application.dataPath, chosenFolderName);
 
-        foreach (Transform child in fileImageParent.transform)
+        if (!Directory.Exists(basePath))
         {
-            Destroy(child.gameObject);
+            Directory.CreateDirectory(basePath);
         }
-        
+
+        fileImageParent.KillAllChildren();
+
         foreach (string specificFilePath in Directory.EnumerateFiles(basePath, $"*.{chosenFileType}"))
         {
             FileImageContainer fileImageContainer = Instantiate(fileImagePrefab, fileImageParent);
