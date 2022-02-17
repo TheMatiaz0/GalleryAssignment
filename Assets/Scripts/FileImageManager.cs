@@ -2,31 +2,38 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class FileImageManager : MonoBehaviour
 {
-    [SerializeField]
-    private string chosenFileType = "png";
-
-    [SerializeField]
-    private string chosenFolderName = "Gallery";
-
+    [Header("Required")]
     [SerializeField]
     private FileImageObject fileImagePrefab = null;
 
     [SerializeField]
     private Transform fileImageParent = null;
 
-    public Queue<FileImage> queue = new Queue<FileImage>();
+
+    [Header("Further Task Customization")]
+    [SerializeField]
+    private string chosenFileExtension = "png";
+
+    [SerializeField]
+    private string chosenDirectoryName = "Gallery";
+
+    private Queue<FileImage> ConcurrentQueue { get; } = new Queue<FileImage>(); // tried using ConcurrentQueue class, but couldn't figure it out so I used locks
 
     public string BaseDataPath { get; private set; }
+    public string BaseSearchPattern { get; private set; }
+    public EnumerationOptions BaseEnumerationOptions { get; private set; }
 
     public event Action<string> OnRefresh = delegate { };
 
-    private object locker = new object();
+    private object EnumerateLocker { get; } = new object();
 
     private FileImageObject[] fileImages = null;
 
@@ -37,7 +44,12 @@ public class FileImageManager : MonoBehaviour
 
     protected void Awake()
     {
-        BaseDataPath = Path.Combine(Application.dataPath, chosenFolderName);
+        BaseDataPath = Path.Combine(Application.dataPath, chosenDirectoryName);
+        BaseSearchPattern = $"*.{chosenFileExtension}";
+        BaseEnumerationOptions = new EnumerationOptions()
+        {
+            RecurseSubdirectories = true
+        };
     }
 
     protected void Start()
@@ -47,17 +59,17 @@ public class FileImageManager : MonoBehaviour
 
     protected void Update()
     {
-        lock (locker)
+        lock (EnumerateLocker)
         {
-            if (queue.Count > 0)
+            if (ConcurrentQueue.Count > 0)
             {
-                FileImage fileImg = queue.Dequeue();
+                FileImage fileImg = ConcurrentQueue.Dequeue();
 
                 FileImageObject createdObject = fileImages[pointer++];
                 createdObject.Initialize(
-                   fileImg.fileName,
-                   FileImageLoader.LoadTextureFromBytes(fileImg.imgBytes),
-                   fileImg.creationDate.ToString());
+                   fileImg.FileName,
+                   ImageLoader.LoadTextureFromBytes(fileImg.ImgBytes),
+                   fileImg.FileCreationDate.ToString());
             }
         }
     }
@@ -70,9 +82,25 @@ public class FileImageManager : MonoBehaviour
         }
     }
 
+    private void DefaultStartSetup()
+    {
+        Directory.CreateDirectory(BaseDataPath);
+
+        foreach (PlaceholderFileImage fileImg in PlaceholderContainer.Instance.PlaceholderFiles)
+        {
+            string creationPath = Path.Combine(BaseDataPath, $"{fileImg.FileName}.{chosenFileExtension}");
+            byte[] imgBytes = fileImg.Texture.EncodeToPNG();
+            using (var fs = new FileStream(creationPath, FileMode.Create, FileAccess.Write))
+            {
+                fs.Write(imgBytes, 0, imgBytes.Length);
+            }
+        }
+
+    }
+
     public void Refresh()
     {
-        if (isRefreshing == true || queue.Count > 0)
+        if (isRefreshing == true || ConcurrentQueue.Count > 0)
         {
             return;
         }
@@ -83,32 +111,39 @@ public class FileImageManager : MonoBehaviour
 
         if (!Directory.Exists(BaseDataPath))
         {
-            Directory.CreateDirectory(BaseDataPath);
+            DefaultStartSetup();
         }
 
         fileImageParent.KillAllChildren();
 
-        int fileCount = Directory.GetFiles(BaseDataPath, $"*.{chosenFileType}").Length;
-
+        int fileCount = Directory.GetFiles(BaseDataPath, BaseSearchPattern).Length;
         fileImages = new FileImageObject[fileCount];
+        BaseRefresh(fileCount);
 
+        directoryEnumerateThread = EnumerateDirectoryThread();
+        directoryEnumerateThread.Start();
+        
+        OnRefresh(errorMessage);
+    }
+
+    private void BaseRefresh(int fileCount)
+    {
         for (int i = 0; i < fileCount; i++)
         {
             FileImageObject fileImgObj = Instantiate(fileImagePrefab, fileImageParent);
             fileImgObj.Initialize();
             fileImages[i] = fileImgObj;
         }
+    }
 
-        directoryEnumerateThread = new Thread(() =>
+    private Thread EnumerateDirectoryThread()
+    {
+        return new Thread(() =>
         {
-            IEnumerable<string> allFiles = Directory.EnumerateFiles(BaseDataPath, 
-                $"*.{chosenFileType}", 
-                new EnumerationOptions() 
-                { 
-                    RecurseSubdirectories = true 
-                });
+            IEnumerable<string> allFilePaths = Directory.EnumerateFiles(BaseDataPath,
+                BaseSearchPattern, BaseEnumerationOptions);
 
-            foreach (string specificFilePath in allFiles)
+            foreach (string specificFilePath in allFilePaths)
             {
                 FileImage fileImage = new FileImage(
                     File.ReadAllBytes(specificFilePath),
@@ -116,17 +151,13 @@ public class FileImageManager : MonoBehaviour
                     File.GetCreationTime(specificFilePath)
                 );
 
-                lock (locker)
+                lock (EnumerateLocker)
                 {
-                    queue.Enqueue(fileImage);
+                    ConcurrentQueue.Enqueue(fileImage);
                 }
             }
 
             isRefreshing = false;
         });
-
-        directoryEnumerateThread.Start();
-        
-        OnRefresh(errorMessage);
     }
 }

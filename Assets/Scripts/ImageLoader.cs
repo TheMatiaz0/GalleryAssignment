@@ -2,7 +2,7 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
-public static class FileImageLoader
+public static class ImageLoader
 {
     public static Texture2D LoadTextureFromFile(string filePath)
     {
@@ -12,7 +12,7 @@ public static class FileImageLoader
 
     public static Texture2D LoadTextureFromBytes(byte[] bytes)
     {
-        Texture2D tex = new Texture2D(512, 512, TextureFormat.RGBA32, false);
+        Texture2D tex = new Texture2D(256, 256, TextureFormat.RGBA32, false);
 
         tex.LoadImage(bytes);
         return tex;
@@ -21,10 +21,10 @@ public static class FileImageLoader
     public static Sprite LoadSpriteFromBytes(byte[] bytes)
     {
         Texture2D tex = LoadTextureFromBytes(bytes);
-        return LoadSprite(tex);
+        return LoadSpriteFromTexture(tex);
     }
 
-    private static Sprite LoadSprite(Texture2D tex)
+    public static Sprite LoadSpriteFromTexture(Texture2D tex)
     {
         Sprite sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), 100f);
         return sprite;
@@ -33,6 +33,6 @@ public static class FileImageLoader
     public static Sprite LoadSpriteFromFile(string filePath)
     {
         Texture2D tex = LoadTextureFromFile(filePath);
-        return LoadSprite(tex);
+        return LoadSpriteFromTexture(tex);
     }
 }

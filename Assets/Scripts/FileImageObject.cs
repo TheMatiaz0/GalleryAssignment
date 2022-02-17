@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,16 +15,12 @@ public class FileImageObject : MonoBehaviour
     [SerializeField]
     private Text fileDate = null;
 
-    [SerializeField]
-    private Texture2D placeholderSprite = null;
-
-    [SerializeField]
-    private string placeholderText = null;
+    public static event Action<Texture2D, string, string> OnOpenModal = delegate { };
 
     public void Initialize()
     {
-        this.fileName.text = placeholderText;
-        this.fileImage.texture = placeholderSprite;
+        this.fileName.text = PlaceholderContainer.Instance.PlaceholderText;
+        this.fileImage.texture = PlaceholderContainer.Instance.PlaceholderTexture;
         this.fileDate.text = null;
     }
 
@@ -32,5 +29,13 @@ public class FileImageObject : MonoBehaviour
         this.fileName.text = fileName;
         this.fileImage.texture = fileImage;
         this.fileDate.text = fileDate;
+    }
+
+    public void OpenImageModal()
+    {
+        if (this.fileImage.texture != null)
+        {
+            OnOpenModal((Texture2D)fileImage.texture, fileName.text, fileDate.text);
+        }
     }
 }
