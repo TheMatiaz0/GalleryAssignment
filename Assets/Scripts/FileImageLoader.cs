@@ -6,15 +6,10 @@ public static class FileImageLoader
 {
     public static Texture2D LoadTextureFromFile(string filePath)
     {
-        if (File.Exists(filePath))
-        {
-            byte[] bytes = File.ReadAllBytes(filePath);
-            Texture2D tex = new Texture2D(0, 0); // parameters here don't matter, because of loading image in the next step
-            tex.LoadImage(bytes);
-            return tex;
-        }
-
-        return null;
+        byte[] bytes = File.ReadAllBytes(filePath);
+        Texture2D tex = new Texture2D(0, 0); // parameters here don't matter, because of loading image in the next step
+        tex.LoadImage(bytes);
+        return tex;
     }
 
     public static Sprite LoadSpriteFromFile(string filePath)

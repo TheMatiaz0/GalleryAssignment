@@ -14,10 +14,20 @@ public class FileImageObject : MonoBehaviour
     [SerializeField]
     private Text fileDate = null;
 
-    public void Initialize(string fileName, Sprite fileImage)
+    [SerializeField]
+    private Sprite placeholderSprite = null;
+
+    public void Initialize(string fileName)
     {
         this.fileName.text = fileName;
+        this.fileImage.sprite = placeholderSprite;
+    }
+
+    public void Initialize(string fileName, Sprite fileImage)
+    {
+        Initialize(fileName);
         this.fileImage.sprite = fileImage;
+        this.fileDate.text = null;
     }
 
     public void Initialize(string fileName, Sprite fileImage, string fileDate)

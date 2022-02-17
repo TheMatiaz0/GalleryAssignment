@@ -121,6 +121,7 @@ MonoBehaviour:
   fileImage: {fileID: 8800189034327946673}
   fileName: {fileID: 5089658617817811148}
   fileDate: {fileID: 5089658617700618396}
+  placeholderSprite: {fileID: 21300000, guid: 081fb2d73ba3c6945be7f9ea38575a65, type: 3}
 --- !u!114 &5089658617052165963
 MonoBehaviour:
   m_ObjectHideFlags: 0

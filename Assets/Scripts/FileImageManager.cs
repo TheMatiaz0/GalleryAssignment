@@ -1,9 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class FileImageManager : MonoBehaviour
 {
@@ -43,14 +42,15 @@ public class FileImageManager : MonoBehaviour
         }
 
         fileImageParent.KillAllChildren();
-
-        foreach (string specificFilePath in Directory.EnumerateFiles(BaseDataPath, $"*.{chosenFileType}"))
+        IEnumerable<string> allFiles = Directory.EnumerateFiles(BaseDataPath, $"*.{chosenFileType}");
+        foreach (string specificFilePath in allFiles)
         {
             FileImageObject fileImageContainer = Instantiate(fileImagePrefab, fileImageParent);
             fileImageContainer.Initialize(Path.GetFileNameWithoutExtension(specificFilePath),
                 FileImageLoader.LoadSpriteFromFile(specificFilePath),
                 File.GetCreationTime(specificFilePath).ToString());
         }
+
 
         OnRefresh(errorMessage);
 
