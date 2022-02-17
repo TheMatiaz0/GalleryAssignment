@@ -12,7 +12,8 @@ public static class FileImageLoader
 
     public static Texture2D LoadTextureFromBytes(byte[] bytes)
     {
-        Texture2D tex = new Texture2D(0, 0); // parameters here don't matter, because of loading image in the next step
+        Texture2D tex = new Texture2D(512, 512, TextureFormat.RGBA32, false);
+
         tex.LoadImage(bytes);
         return tex;
     }

@@ -6,13 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public struct PrimitiveFileImage
-{
-    public byte[] imgBytes;
-    public string fileName;
-    public DateTime creationDate;
-}
-
 public class FileImageManager : MonoBehaviour
 {
     [SerializeField]
@@ -27,7 +20,7 @@ public class FileImageManager : MonoBehaviour
     [SerializeField]
     private Transform fileImageParent = null;
 
-    public Queue<PrimitiveFileImage> queue = new Queue<PrimitiveFileImage>();
+    public Queue<FileImage> queue = new Queue<FileImage>();
 
     public string BaseDataPath { get; private set; }
 
@@ -38,6 +31,9 @@ public class FileImageManager : MonoBehaviour
     private FileImageObject[] fileImages = null;
 
     private int pointer = 0;
+    private bool isRefreshing;
+
+    private Thread directoryEnumerateThread;
 
     protected void Awake()
     {
@@ -55,17 +51,34 @@ public class FileImageManager : MonoBehaviour
         {
             if (queue.Count > 0)
             {
-                PrimitiveFileImage file = queue.Dequeue();
-                fileImages[pointer++].Initialize(
-                   file.fileName,
-                   FileImageLoader.LoadSpriteFromBytes(file.imgBytes),
-                   file.creationDate.ToString());
+                FileImage fileImg = queue.Dequeue();
+
+                FileImageObject createdObject = fileImages[pointer++];
+                createdObject.Initialize(
+                   fileImg.fileName,
+                   FileImageLoader.LoadTextureFromBytes(fileImg.imgBytes),
+                   fileImg.creationDate.ToString());
             }
+        }
+    }
+
+    protected void OnDestroy()
+    {
+        if (directoryEnumerateThread != null)
+        {
+            directoryEnumerateThread.Abort();
         }
     }
 
     public void Refresh()
     {
+        if (isRefreshing == true || queue.Count > 0)
+        {
+            return;
+        }
+
+        isRefreshing = true;
+        pointer = 0;
         string errorMessage = null;
 
         if (!Directory.Exists(BaseDataPath))
@@ -75,35 +88,45 @@ public class FileImageManager : MonoBehaviour
 
         fileImageParent.KillAllChildren();
 
-        int len = Directory.GetFiles(BaseDataPath, $"*.{chosenFileType}").Length;
+        int fileCount = Directory.GetFiles(BaseDataPath, $"*.{chosenFileType}").Length;
 
-        fileImages = new FileImageObject[len];
+        fileImages = new FileImageObject[fileCount];
 
-        for (int i = 0; i < len; i++)
+        for (int i = 0; i < fileCount; i++)
         {
-            fileImages[i] = Instantiate(fileImagePrefab, fileImageParent);
+            FileImageObject fileImgObj = Instantiate(fileImagePrefab, fileImageParent);
+            fileImgObj.Initialize();
+            fileImages[i] = fileImgObj;
         }
 
-        Thread thread = new Thread(() =>
+        directoryEnumerateThread = new Thread(() =>
         {
-            IEnumerable<string> allFiles = Directory.EnumerateFiles(BaseDataPath, $"*.{chosenFileType}");
+            IEnumerable<string> allFiles = Directory.EnumerateFiles(BaseDataPath, 
+                $"*.{chosenFileType}", 
+                new EnumerationOptions() 
+                { 
+                    RecurseSubdirectories = true 
+                });
+
             foreach (string specificFilePath in allFiles)
             {
-                PrimitiveFileImage primitiveFileImage = new PrimitiveFileImage();
-                primitiveFileImage.imgBytes = File.ReadAllBytes(specificFilePath);
-                primitiveFileImage.fileName = Path.GetFileNameWithoutExtension(specificFilePath);
-                primitiveFileImage.creationDate = File.GetCreationTime(specificFilePath);
+                FileImage fileImage = new FileImage(
+                    File.ReadAllBytes(specificFilePath),
+                    Path.GetFileNameWithoutExtension(specificFilePath),
+                    File.GetCreationTime(specificFilePath)
+                );
+
                 lock (locker)
                 {
-                    queue.Enqueue(primitiveFileImage);
+                    queue.Enqueue(fileImage);
                 }
             }
+
+            isRefreshing = false;
         });
 
-        thread.Start();
+        directoryEnumerateThread.Start();
         
-
-
         OnRefresh(errorMessage);
     }
 }

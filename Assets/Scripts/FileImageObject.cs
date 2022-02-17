@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class FileImageObject : MonoBehaviour
 {
     [SerializeField]
-    private Image fileImage = null;
+    private RawImage fileImage = null;
 
     [SerializeField]
     private Text fileName = null;
@@ -15,24 +15,22 @@ public class FileImageObject : MonoBehaviour
     private Text fileDate = null;
 
     [SerializeField]
-    private Sprite placeholderSprite = null;
+    private Texture2D placeholderSprite = null;
 
-    public void Initialize(string fileName)
-    {
-        this.fileName.text = fileName;
-        this.fileImage.sprite = placeholderSprite;
-    }
+    [SerializeField]
+    private string placeholderText = null;
 
-    public void Initialize(string fileName, Sprite fileImage)
+    public void Initialize()
     {
-        Initialize(fileName);
-        this.fileImage.sprite = fileImage;
+        this.fileName.text = placeholderText;
+        this.fileImage.texture = placeholderSprite;
         this.fileDate.text = null;
     }
 
-    public void Initialize(string fileName, Sprite fileImage, string fileDate)
+    public void Initialize(string fileName, Texture2D fileImage, string fileDate)
     {
-        Initialize(fileName, fileImage);
+        this.fileName.text = fileName;
+        this.fileImage.texture = fileImage;
         this.fileDate.text = fileDate;
     }
 }
