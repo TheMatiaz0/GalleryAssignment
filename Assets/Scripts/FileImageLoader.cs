@@ -2,47 +2,9 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class FileImageLoader : MonoBehaviour
+public static class FileImageLoader
 {
-    [SerializeField]
-    private string chosenFileType = "png";
-
-    [SerializeField]
-    private string chosenFolderName = "Gallery";
-
-    [SerializeField]
-    private FileImageContainer fileImagePrefab = null;
-
-    [SerializeField]
-    private Transform fileImageParent = null;
-
-    protected void Start()
-    {
-        Refresh();
-    }
-
-    public void Refresh()
-    {
-        string basePath = Path.Combine(Application.dataPath, chosenFolderName);
-
-        if (!Directory.Exists(basePath))
-        {
-            Directory.CreateDirectory(basePath);
-        }
-
-        fileImageParent.KillAllChildren();
-
-        foreach (string specificFilePath in Directory.EnumerateFiles(basePath, $"*.{chosenFileType}"))
-        {
-            FileImageContainer fileImageContainer = Instantiate(fileImagePrefab, fileImageParent);
-            fileImageContainer.Initialize(Path.GetFileNameWithoutExtension(specificFilePath), 
-                LoadSpriteFromFile(specificFilePath), 
-                File.GetCreationTime(specificFilePath).ToString());
-        }
-
-    }
-
-    public Texture2D LoadTextureFromFile(string filePath)
+    public static Texture2D LoadTextureFromFile(string filePath)
     {
         if (File.Exists(filePath))
         {
@@ -55,7 +17,7 @@ public class FileImageLoader : MonoBehaviour
         return null;
     }
 
-    public Sprite LoadSpriteFromFile(string filePath)
+    public static Sprite LoadSpriteFromFile(string filePath)
     {
         Texture2D tex = LoadTextureFromFile(filePath);
 

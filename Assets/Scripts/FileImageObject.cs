@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class FileImageContainer : MonoBehaviour
+public class FileImageObject : MonoBehaviour
 {
     [SerializeField]
     private Image fileImage = null;
