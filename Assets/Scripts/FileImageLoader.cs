@@ -33,8 +33,9 @@ public class FileImageLoader : MonoBehaviour
         foreach (string specificFilePath in Directory.EnumerateFiles(basePath, $"*.{chosenFileType}"))
         {
             FileImageContainer fileImageContainer = Instantiate(fileImagePrefab, fileImageParent);
-            fileImageContainer.Initialize(Path.GetFileName(specificFilePath), 
-                LoadSpriteFromFile(specificFilePath));
+            fileImageContainer.Initialize(Path.GetFileNameWithoutExtension(specificFilePath), 
+                LoadSpriteFromFile(specificFilePath), 
+                File.GetCreationTime(specificFilePath).ToString());
         }
 
     }

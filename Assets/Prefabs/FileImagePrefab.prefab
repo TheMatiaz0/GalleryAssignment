@@ -246,7 +246,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 2022-02-15
+  m_Text: PLACEHOLDER_DATE
 --- !u!1 &5089658617817811138
 GameObject:
   m_ObjectHideFlags: 0
@@ -326,7 +326,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Spring.png
+  m_Text: PLACEHOLDER_TITLE
 --- !u!1 &6465111131491661860
 GameObject:
   m_ObjectHideFlags: 0

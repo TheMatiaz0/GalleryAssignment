@@ -19,4 +19,10 @@ public class FileImageContainer : MonoBehaviour
         this.fileName.text = fileName;
         this.fileImage.sprite = fileImage;
     }
+
+    public void Initialize(string fileName, Sprite fileImage, string fileDate)
+    {
+        Initialize(fileName, fileImage);
+        this.fileDate.text = fileDate;
+    }
 }
