@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class StatusContainer : MonoBehaviour
+public class StatusContainer : MonoSingleton<StatusContainer>
 {
     [SerializeField]
     private Text basePathStatus = null;
@@ -12,31 +12,27 @@ public class StatusContainer : MonoBehaviour
     private Text errorStatus = null;
 
     [SerializeField]
-    private FileImageManager fileImageManager = null;
+    private float secondsUntilErrorDisappear = 5;
 
     protected void Start()
     {
-        basePathStatus.text = string.Format(basePathStatus.text, fileImageManager.BaseDataPath);
+        DesetupError();
+    }
+
+    private void DesetupError()
+    {
         errorStatus.gameObject.SetActive(false);
-        fileImageManager.OnRefresh += FileImageManager_OnRefresh;
     }
 
-    protected void OnDestroy()
+    public void SetupStatus(string dataPath)
     {
-        fileImageManager.OnRefresh -= FileImageManager_OnRefresh;  
+        basePathStatus.text = string.Format(basePathStatus.text, dataPath);
     }
 
-    private void FileImageManager_OnRefresh(string errorMessage)
+    public void ThrowError(string errorMessage)
     {
-        if (errorMessage != null)
-        {
-            errorStatus.text = errorMessage;
-        }
-
-        else
-        {
-            errorStatus.gameObject.SetActive(false);
-        }
-
+        errorStatus.gameObject.SetActive(true);
+        errorStatus.text = errorMessage;
+        Invoke(nameof(DesetupError), secondsUntilErrorDisappear);
     }
 }

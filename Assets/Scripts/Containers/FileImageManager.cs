@@ -31,8 +31,6 @@ public class FileImageManager : MonoBehaviour
     public string BaseSearchPattern { get; private set; }
     public EnumerationOptions BaseEnumerationOptions { get; private set; }
 
-    public event Action<string> OnRefresh = delegate { };
-
     private object EnumerateLocker { get; } = new object();
 
     private FileImageObject[] fileImages = null;
@@ -40,7 +38,7 @@ public class FileImageManager : MonoBehaviour
     private int pointer = 0;
     private bool isRefreshing;
 
-    private Thread directoryEnumerateThread;
+    private Thread enumerateThread = null;
 
     protected void Awake()
     {
@@ -76,9 +74,9 @@ public class FileImageManager : MonoBehaviour
 
     protected void OnDestroy()
     {
-        if (directoryEnumerateThread != null)
+        if (enumerateThread != null)
         {
-            directoryEnumerateThread.Abort();
+            enumerateThread.Abort();
         }
     }
 
@@ -105,9 +103,10 @@ public class FileImageManager : MonoBehaviour
             return;
         }
 
+        StatusContainer.Instance.SetupStatus(BaseDataPath);
+
         isRefreshing = true;
         pointer = 0;
-        string errorMessage = null;
 
         if (!Directory.Exists(BaseDataPath))
         {
@@ -118,12 +117,11 @@ public class FileImageManager : MonoBehaviour
 
         int fileCount = Directory.GetFiles(BaseDataPath, BaseSearchPattern).Length;
         fileImages = new FileImageObject[fileCount];
-        BaseRefresh(fileCount);
 
-        directoryEnumerateThread = EnumerateDirectoryThread();
-        directoryEnumerateThread.Start();
-        
-        OnRefresh(errorMessage);
+
+        enumerateThread = EnumerateDirectoryThread();
+        BaseRefresh(fileCount);
+        enumerateThread.Start();
     }
 
     private void BaseRefresh(int fileCount)
@@ -140,11 +138,14 @@ public class FileImageManager : MonoBehaviour
     {
         return new Thread(() =>
         {
-            IEnumerable<string> allFilePaths = Directory.EnumerateFiles(BaseDataPath,
-                BaseSearchPattern, BaseEnumerationOptions);
-
-            foreach (string specificFilePath in allFilePaths)
+            foreach (string specificFilePath in Directory.EnumerateFiles(BaseDataPath,
+                BaseSearchPattern, BaseEnumerationOptions))
             {
+                if (!File.Exists(specificFilePath))
+                {
+                    StatusContainer.Instance.ThrowError($"Could not find file \"{specificFilePath}\". File was probably removed during refresh.");
+                    continue;
+                }
                 FileImage fileImage = new FileImage(
                     File.ReadAllBytes(specificFilePath),
                     Path.GetFileNameWithoutExtension(specificFilePath),

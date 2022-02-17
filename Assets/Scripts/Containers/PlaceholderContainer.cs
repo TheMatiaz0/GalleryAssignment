@@ -2,18 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlaceholderContainer : MonoBehaviour
+public class PlaceholderContainer : MonoSingleton<PlaceholderContainer>
 {
-    /// <summary>
-    /// Singleton design pattern for PlaceholderContainer
-    /// </summary>
-    public static PlaceholderContainer Instance { get; private set; }
-
-    protected void Awake()
-    {
-        Instance = this;
-    }
-
     [SerializeField]
     private Texture2D placeholderTexture = null;
 

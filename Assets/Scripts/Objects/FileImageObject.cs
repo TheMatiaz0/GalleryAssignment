@@ -33,7 +33,7 @@ public class FileImageObject : MonoBehaviour
 
     public void OpenImageModal()
     {
-        if (this.fileImage.texture != null)
+        if (this.fileImage.texture != PlaceholderContainer.Instance.PlaceholderTexture)
         {
             OnOpenModal((Texture2D)fileImage.texture, fileName.text, fileDate.text);
         }
