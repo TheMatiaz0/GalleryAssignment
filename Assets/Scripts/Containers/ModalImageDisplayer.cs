@@ -19,7 +19,7 @@ public class ModalImageDisplayer : MonoBehaviour
 
     protected void Awake()
     {
-        FileImageObject.OnOpenModal += FileImageObject_OnOpenModal;
+        FileImageUnityObject.OnOpenModal += FileImageObject_OnOpenModal;
     }
 
     private void FileImageObject_OnOpenModal(Texture2D tex, string fileName, string fileDate)
@@ -29,7 +29,7 @@ public class ModalImageDisplayer : MonoBehaviour
 
     protected void OnDestroy()
     {
-        FileImageObject.OnOpenModal -= FileImageObject_OnOpenModal;
+        FileImageUnityObject.OnOpenModal -= FileImageObject_OnOpenModal;
     }
 
     public void Display(Texture2D tex, string fileName, string fileDate)

@@ -12,7 +12,7 @@ public class FileImageManager : MonoBehaviour
 {
     [Header("Required")]
     [SerializeField]
-    private FileImageObject fileImagePrefab = null;
+    private FileImageUnityObject fileImagePrefab = null;
 
     [SerializeField]
     private Transform fileImageParent = null;
@@ -33,12 +33,14 @@ public class FileImageManager : MonoBehaviour
 
     private object EnumerateLocker { get; } = new object();
 
-    private FileImageObject[] fileImages = null;
+    private FileImageUnityObject[] savedFileImagesObjects = null;
 
     private int pointer = 0;
     private bool isRefreshing;
 
     private Thread enumerateThread = null;
+
+    private FileImage[] fileImgs = null;
 
     protected void Awake()
     {
@@ -63,7 +65,7 @@ public class FileImageManager : MonoBehaviour
             {
                 FileImage fileImg = ConcurrentQueue.Dequeue();
 
-                FileImageObject createdObject = fileImages[pointer++];
+                FileImageUnityObject createdObject = savedFileImagesObjects[pointer++];
                 createdObject.Initialize(
                    fileImg.FileName,
                    ImageLoader.LoadTextureFromBytes(fileImg.ImgBytes),
@@ -115,22 +117,37 @@ public class FileImageManager : MonoBehaviour
 
         fileImageParent.KillAllChildren();
 
-        int fileCount = Directory.GetFiles(BaseDataPath, BaseSearchPattern).Length;
-        fileImages = new FileImageObject[fileCount];
+        string[] filePaths = Directory.GetFiles(
+            BaseDataPath,
+            BaseSearchPattern,
+            BaseEnumerationOptions);
 
+        savedFileImagesObjects = new FileImageUnityObject[filePaths.Length];
+        fileImgs = new FileImage[filePaths.Length];
+        BaseRefresh(filePaths);
 
         enumerateThread = EnumerateDirectoryThread();
-        BaseRefresh(fileCount);
         enumerateThread.Start();
     }
 
-    private void BaseRefresh(int fileCount)
+    private void BaseRefresh(string[] filePaths)
     {
-        for (int i = 0; i < fileCount; i++)
+        for (int i = 0; i < filePaths.Length; i++)
         {
-            FileImageObject fileImgObj = Instantiate(fileImagePrefab, fileImageParent);
-            fileImgObj.Initialize();
-            fileImages[i] = fileImgObj;
+            string path = filePaths[i];
+
+            FileImageUnityObject fileImgUnityObject = Instantiate(fileImagePrefab, fileImageParent);
+
+            FileImage fileImgObject = new FileImage(
+                File.ReadAllBytes(path),
+                Path.GetFileNameWithoutExtension(path),
+                File.GetCreationTime(path)
+            );
+
+            fileImgs[i] = fileImgObject;
+
+            fileImgUnityObject.Initialize($"({fileImgObject.FileName}, {fileImgObject.FileCreationDate})");
+            savedFileImagesObjects[i] = fileImgUnityObject;
         }
     }
 
@@ -138,23 +155,11 @@ public class FileImageManager : MonoBehaviour
     {
         return new Thread(() =>
         {
-            foreach (string specificFilePath in Directory.EnumerateFiles(BaseDataPath,
-                BaseSearchPattern, BaseEnumerationOptions))
+            for (int i = 0; i < fileImgs.Length; i++)
             {
-                if (!File.Exists(specificFilePath))
-                {
-                    StatusContainer.Instance.ThrowError($"Could not find file \"{specificFilePath}\". File was probably removed during refresh.");
-                    continue;
-                }
-                FileImage fileImage = new FileImage(
-                    File.ReadAllBytes(specificFilePath),
-                    Path.GetFileNameWithoutExtension(specificFilePath),
-                    File.GetCreationTime(specificFilePath)
-                );
-
                 lock (EnumerateLocker)
                 {
-                    ConcurrentQueue.Enqueue(fileImage);
+                    ConcurrentQueue.Enqueue(fileImgs[i]);
                 }
             }
 

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class FileImageObject : MonoBehaviour
+public class FileImageUnityObject : MonoBehaviour
 {
     [SerializeField]
     private RawImage fileImage = null;
@@ -17,11 +17,11 @@ public class FileImageObject : MonoBehaviour
 
     public static event Action<Texture2D, string, string> OnOpenModal = delegate { };
 
-    public void Initialize()
+    public void Initialize(string fileDate)
     {
         this.fileName.text = PlaceholderContainer.Instance.PlaceholderText;
         this.fileImage.texture = PlaceholderContainer.Instance.PlaceholderTexture;
-        this.fileDate.text = null;
+        this.fileDate.text = fileDate;
     }
 
     public void Initialize(string fileName, Texture2D fileImage, string fileDate)
