@@ -33,9 +33,6 @@ public class FileImageManager : MonoBehaviour
 
     private object EnumerateLocker { get; } = new object();
 
-    private FileImageUnityObject[] savedFileImagesObjects = null;
-
-    private int pointer = 0;
     private bool isRefreshing;
 
     private Thread enumerateThread = null;
@@ -63,13 +60,19 @@ public class FileImageManager : MonoBehaviour
         {
             if (ConcurrentQueue.Count > 0)
             {
-                FileImage fileImg = ConcurrentQueue.Dequeue();
+                FileImage fileImgFromQueue = ConcurrentQueue.Dequeue();
 
-                FileImageUnityObject createdObject = savedFileImagesObjects[pointer++];
+                if (fileImgFromQueue == null)
+                {
+                    return;
+                }
+
+                FileImageUnityObject createdObject = fileImgFromQueue.UnityObject;
+
                 createdObject.Initialize(
-                   fileImg.FileName,
-                   ImageLoader.LoadTextureFromBytes(fileImg.ImgBytes),
-                   fileImg.FileCreationDate.ToString());
+                   fileImgFromQueue.FileName,
+                   ImageLoader.LoadTextureFromBytes(fileImgFromQueue.ImgBytes),
+                   fileImgFromQueue.FileCreationDate.ToString());
             }
         }
     }
@@ -90,7 +93,7 @@ public class FileImageManager : MonoBehaviour
         {
             string creationPath = Path.Combine(BaseDataPath, $"{fileImg.FileName}.{chosenFileExtension}");
             byte[] imgBytes = fileImg.Texture.EncodeToPNG();
-            using (var fs = new FileStream(creationPath, FileMode.Create, FileAccess.Write))
+            using (FileStream fs = new FileStream(creationPath, FileMode.Create, FileAccess.Write))
             {
                 fs.Write(imgBytes, 0, imgBytes.Length);
             }
@@ -108,7 +111,6 @@ public class FileImageManager : MonoBehaviour
         StatusContainer.Instance.SetupStatus(BaseDataPath);
 
         isRefreshing = true;
-        pointer = 0;
 
         if (!Directory.Exists(BaseDataPath))
         {
@@ -122,44 +124,49 @@ public class FileImageManager : MonoBehaviour
             BaseSearchPattern,
             BaseEnumerationOptions);
 
-        savedFileImagesObjects = new FileImageUnityObject[filePaths.Length];
         fileImgs = new FileImage[filePaths.Length];
-        BaseRefresh(filePaths);
+        ConvertPathsToData(filePaths);
 
-        enumerateThread = EnumerateDirectoryThread();
+        enumerateThread = EnumerateDirectoryThread(fileImgs);
         enumerateThread.Start();
     }
 
-    private void BaseRefresh(string[] filePaths)
+    private void ConvertPathsToData(string[] filePaths)
     {
         for (int i = 0; i < filePaths.Length; i++)
         {
             string path = filePaths[i];
 
+            byte[] byteData = File.ReadAllBytes(path);
+
+            if (ImageHeaderChecker.GetLiteralExtensionFromType(byteData) != $".{chosenFileExtension}")
+            {
+                continue;
+            }
+
             FileImageUnityObject fileImgUnityObject = Instantiate(fileImagePrefab, fileImageParent);
 
             FileImage fileImgObject = new FileImage(
-                File.ReadAllBytes(path),
-                Path.GetFileNameWithoutExtension(path),
-                File.GetCreationTime(path)
-            );
-
-            fileImgs[i] = fileImgObject;
+            byteData,
+            Path.GetFileNameWithoutExtension(path),
+            File.GetCreationTime(path), 
+            fileImgUnityObject);
 
             fileImgUnityObject.Initialize($"({fileImgObject.FileName}, {fileImgObject.FileCreationDate})");
-            savedFileImagesObjects[i] = fileImgUnityObject;
+
+            fileImgs[i] = fileImgObject;
         }
     }
 
-    private Thread EnumerateDirectoryThread()
+    private Thread EnumerateDirectoryThread(FileImage[] enumerateArray)
     {
         return new Thread(() =>
         {
-            for (int i = 0; i < fileImgs.Length; i++)
+            for (int i = 0; i < enumerateArray.Length; i++)
             {
                 lock (EnumerateLocker)
                 {
-                    ConcurrentQueue.Enqueue(fileImgs[i]);
+                    ConcurrentQueue.Enqueue(enumerateArray[i]);
                 }
             }
 
