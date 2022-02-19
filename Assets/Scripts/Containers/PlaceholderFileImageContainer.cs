@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
-public class PlaceholderFileImage
+public class PlaceholderFileImageContainer
 {
     [SerializeField]
     private Texture2D texture = null;

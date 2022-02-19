@@ -11,9 +11,9 @@ public class PlaceholderContainer : MonoSingleton<PlaceholderContainer>
     private string placeholderText = null;
 
     [SerializeField]
-    private PlaceholderFileImage[] placeholderFiles = null;
+    private PlaceholderFileImageContainer[] placeholderFiles = null;
 
     public Texture2D PlaceholderTexture => placeholderTexture;
     public string PlaceholderText => placeholderText;
-    public PlaceholderFileImage[] PlaceholderFiles => placeholderFiles;
+    public PlaceholderFileImageContainer[] PlaceholderFiles => placeholderFiles;
 }

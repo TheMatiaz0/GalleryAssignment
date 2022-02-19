@@ -89,7 +89,7 @@ public class FileImageManager : MonoBehaviour
     {
         Directory.CreateDirectory(BaseDirectoryPath);
 
-        foreach (PlaceholderFileImage fileImg in PlaceholderContainer.Instance.PlaceholderFiles)
+        foreach (PlaceholderFileImageContainer fileImg in PlaceholderContainer.Instance.PlaceholderFiles)
         {
             string creationPath = Path.Combine(BaseDirectoryPath, $"{fileImg.FileName}.{chosenFileExtension}");
             byte[] imgBytes = fileImg.Texture.EncodeToPNG();
