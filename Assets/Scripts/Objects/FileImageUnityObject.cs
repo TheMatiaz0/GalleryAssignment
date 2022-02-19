@@ -15,7 +15,9 @@ public class FileImageUnityObject : MonoBehaviour
     [SerializeField]
     private Text fileDate = null;
 
-    public static event Action<Texture2D, string, string> OnOpenModal = delegate { };
+    private string filePath = null;
+
+    public static event Action<Texture2D, string, string, string> OnOpenModal = delegate { };
 
     public void Initialize(string fileDate)
     {
@@ -24,18 +26,19 @@ public class FileImageUnityObject : MonoBehaviour
         this.fileDate.text = fileDate;
     }
 
-    public void Initialize(string fileName, Texture2D fileImage, string fileDate)
+    public void Initialize(string fileName, Texture2D fileImage, string fileDate, string filePath)
     {
         this.fileName.text = fileName;
         this.fileImage.texture = fileImage;
         this.fileDate.text = fileDate;
+        this.filePath = filePath;
     }
 
     public void OpenImageModal()
     {
         if (this.fileImage.texture != PlaceholderContainer.Instance.PlaceholderTexture)
         {
-            OnOpenModal((Texture2D)fileImage.texture, fileName.text, fileDate.text);
+            OnOpenModal((Texture2D)fileImage.texture, fileName.text, fileDate.text, filePath);
         }
     }
 }

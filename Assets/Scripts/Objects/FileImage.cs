@@ -9,12 +9,14 @@ public class FileImage
     public string FileName { get; }
     public DateTime FileCreationDate { get; }
     public FileImageUnityObject UnityObject { get; }
+    public string FilePath { get; }
 
-    public FileImage(byte[] imgBytes, string fileName, DateTime creationTime, FileImageUnityObject unityObject)
+    public FileImage(byte[] imgBytes, string fileName, DateTime creationTime, FileImageUnityObject unityObject, string filePath)
     {
         ImgBytes = imgBytes;
         FileName = fileName;
         FileCreationDate = creationTime;
         UnityObject = unityObject;
+        FilePath = filePath;
     }
 }

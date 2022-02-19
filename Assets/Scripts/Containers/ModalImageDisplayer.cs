@@ -17,14 +17,17 @@ public class ModalImageDisplayer : MonoBehaviour
     [SerializeField]
     private GameObject visibleParent = null;
 
+    [SerializeField]
+    private Button openDefaultBtn = null;
+
     protected void Awake()
     {
         FileImageUnityObject.OnOpenModal += FileImageObject_OnOpenModal;
     }
 
-    private void FileImageObject_OnOpenModal(Texture2D tex, string fileName, string fileDate)
+    private void FileImageObject_OnOpenModal(Texture2D tex, string fileName, string fileDate, string filePath)
     {
-        Display(tex, fileName, fileDate);
+        Display(tex, fileName, fileDate, filePath);
     }
 
     protected void OnDestroy()
@@ -32,11 +35,12 @@ public class ModalImageDisplayer : MonoBehaviour
         FileImageUnityObject.OnOpenModal -= FileImageObject_OnOpenModal;
     }
 
-    public void Display(Texture2D tex, string fileName, string fileDate)
+    public void Display(Texture2D tex, string fileName, string fileDate, string pathToFile)
     {
         fullImage.sprite = ImageLoader.LoadSpriteFromTexture(tex);
         this.fileName.text = fileName;
         this.fileDate.text = fileDate;
+        openDefaultBtn.onClick.AddListener(() => Application.OpenURL($"file://{pathToFile}"));
         visibleParent.SetActive(true);
     }
 

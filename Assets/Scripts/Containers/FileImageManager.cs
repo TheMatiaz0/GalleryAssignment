@@ -25,9 +25,9 @@ public class FileImageManager : MonoBehaviour
     [SerializeField]
     private string chosenDirectoryName = "Gallery";
 
-    private Queue<FileImage> ConcurrentQueue { get; } = new Queue<FileImage>(); // tried using ConcurrentQueue class, but couldn't figure it out so I used locks
+    private Queue<FileImage> ConcurrentQueue { get; } = new Queue<FileImage>();
 
-    public string BaseDataPath { get; private set; }
+    public string BaseDirectoryPath { get; private set; }
     public string BaseSearchPattern { get; private set; }
     public EnumerationOptions BaseEnumerationOptions { get; private set; }
 
@@ -41,7 +41,7 @@ public class FileImageManager : MonoBehaviour
 
     protected void Awake()
     {
-        BaseDataPath = Path.Combine(Application.dataPath, chosenDirectoryName);
+        BaseDirectoryPath = Path.Combine(Application.dataPath, chosenDirectoryName);
         BaseSearchPattern = $"*.{chosenFileExtension}";
         BaseEnumerationOptions = new EnumerationOptions()
         {
@@ -72,7 +72,7 @@ public class FileImageManager : MonoBehaviour
                 createdObject.Initialize(
                    fileImgFromQueue.FileName,
                    ImageLoader.LoadTextureFromBytes(fileImgFromQueue.ImgBytes),
-                   fileImgFromQueue.FileCreationDate.ToString());
+                   fileImgFromQueue.FileCreationDate.ToString(), fileImgFromQueue.FilePath);
             }
         }
     }
@@ -87,11 +87,11 @@ public class FileImageManager : MonoBehaviour
 
     private void DefaultStartSetup()
     {
-        Directory.CreateDirectory(BaseDataPath);
+        Directory.CreateDirectory(BaseDirectoryPath);
 
         foreach (PlaceholderFileImage fileImg in PlaceholderContainer.Instance.PlaceholderFiles)
         {
-            string creationPath = Path.Combine(BaseDataPath, $"{fileImg.FileName}.{chosenFileExtension}");
+            string creationPath = Path.Combine(BaseDirectoryPath, $"{fileImg.FileName}.{chosenFileExtension}");
             byte[] imgBytes = fileImg.Texture.EncodeToPNG();
             using (FileStream fs = new FileStream(creationPath, FileMode.Create, FileAccess.Write))
             {
@@ -101,6 +101,11 @@ public class FileImageManager : MonoBehaviour
 
     }
 
+    public void OpenDirectoryPath()
+    {
+        Application.OpenURL($"file://{BaseDirectoryPath}");
+    }
+
     public void Refresh()
     {
         if (isRefreshing == true || ConcurrentQueue.Count > 0)
@@ -108,38 +113,38 @@ public class FileImageManager : MonoBehaviour
             return;
         }
 
-        StatusContainer.Instance.SetupStatus(BaseDataPath);
+        StatusContainer.Instance.SetupStatus(BaseDirectoryPath);
 
         isRefreshing = true;
 
-        if (!Directory.Exists(BaseDataPath))
+        if (!Directory.Exists(BaseDirectoryPath))
         {
             DefaultStartSetup();
         }
 
         fileImageParent.KillAllChildren();
 
-        string[] filePaths = Directory.GetFiles(
-            BaseDataPath,
+        string[] paths = Directory.GetFiles(
+            BaseDirectoryPath,
             BaseSearchPattern,
             BaseEnumerationOptions);
 
-        fileImgs = new FileImage[filePaths.Length];
-        ConvertPathsToData(filePaths);
+        fileImgs = new FileImage[paths.Length];
+        ConvertPathsToData(paths);
 
         enumerateThread = EnumerateDirectoryThread(fileImgs);
         enumerateThread.Start();
     }
 
-    private void ConvertPathsToData(string[] filePaths)
+    private void ConvertPathsToData(string[] paths)
     {
-        for (int i = 0; i < filePaths.Length; i++)
+        for (int i = 0; i < paths.Length; i++)
         {
-            string path = filePaths[i];
+            string path = paths[i];
 
-            byte[] byteData = File.ReadAllBytes(path);
+            byte[] imageData = File.ReadAllBytes(path);
 
-            if (ImageHeaderChecker.GetLiteralExtensionFromType(byteData) != $".{chosenFileExtension}")
+            if (ImageHeaderChecker.GetLiteralExtensionFromType(imageData) != $".{chosenFileExtension}")
             {
                 continue;
             }
@@ -147,10 +152,11 @@ public class FileImageManager : MonoBehaviour
             FileImageUnityObject fileImgUnityObject = Instantiate(fileImagePrefab, fileImageParent);
 
             FileImage fileImgObject = new FileImage(
-            byteData,
+            imageData,
             Path.GetFileNameWithoutExtension(path),
             File.GetCreationTime(path), 
-            fileImgUnityObject);
+            fileImgUnityObject,
+            path);
 
             fileImgUnityObject.Initialize($"({fileImgObject.FileName}, {fileImgObject.FileCreationDate})");
 
