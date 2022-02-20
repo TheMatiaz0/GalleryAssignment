@@ -61,12 +61,14 @@ public class FileImageManager : MonoBehaviour
 
                 if (fileImgFromQueue == null)
                 {
+                    Debug.LogWarning("FileImage has been removed from directory while refreshing");
+                    StatusSingletonObject.Instance.ThrowError("FileImage has been removed from directory while refreshing");
                     return;
                 }
 
-                FileImageUnityObject createdObject = fileImgFromQueue.UnityObject;
+                FileImageUnityObject instantedObject = fileImgFromQueue.UnityObject;
 
-                createdObject.Initialize(
+                instantedObject.Initialize(
                    fileImgFromQueue.FileName,
                    ImageLoader.LoadTextureFromBytes(fileImgFromQueue.ImgBytes),
                    fileImgFromQueue.FileCreationDate.ToString(), fileImgFromQueue.FilePath);
@@ -88,15 +90,18 @@ public class FileImageManager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Creating placeholder images within base directory path
+    /// </summary>
     private void DefaultStartSetup()
     {
         Directory.CreateDirectory(BaseDirectoryPath);
 
         foreach (PlaceholderFileImageContainer fileImg in PlaceholderContainer.Instance.PlaceholderFiles)
         {
-            string creationPath = Path.Combine(BaseDirectoryPath, $"{fileImg.FileName}.{chosenFileExtension}");
+            string creationDirPath = Path.Combine(BaseDirectoryPath, $"{fileImg.FileName}.{chosenFileExtension}");
             byte[] imgBytes = fileImg.Texture.EncodeToPNG();
-            using (FileStream fs = new FileStream(creationPath, FileMode.Create, FileAccess.Write))
+            using (FileStream fs = new FileStream(creationDirPath, FileMode.Create, FileAccess.Write))
             {
                 fs.Write(imgBytes, 0, imgBytes.Length);
             }
@@ -108,6 +113,8 @@ public class FileImageManager : MonoBehaviour
     {
         if (isRefreshing == true || ConcurrentQueue.Count > 0)
         {
+            Debug.LogWarning("Can't refresh images while refreshing. Please wait till refreshing ends");
+            StatusSingletonObject.Instance.ThrowError("Can't refresh images while refreshing. Please wait till refreshing ends");
             return;
         }
 
@@ -116,6 +123,7 @@ public class FileImageManager : MonoBehaviour
 
         if (!Directory.Exists(BaseDirectoryPath))
         {
+            Debug.Log("Directory does not exist, creating a default one with placeholder images");
             DefaultStartSetup();
         }
 
@@ -143,6 +151,8 @@ public class FileImageManager : MonoBehaviour
 
             if (ImageHeaderChecker.GetLiteralExtensionFromType(imageData) != $".{chosenFileExtension}")
             {
+                Debug.LogWarning($"Loaded image {path} is not a type of {chosenFileExtension} image");
+                StatusSingletonObject.Instance.ThrowError($"Loaded image {path} is not a type of {chosenFileExtension} image");
                 continue;
             }
 

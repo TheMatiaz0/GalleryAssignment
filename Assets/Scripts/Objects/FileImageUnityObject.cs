@@ -18,7 +18,24 @@ public class FileImageUnityObject : MonoBehaviour
     [SerializeField]
     private GameObject enlargeLabel = null;
 
+    [SerializeField]
+    private Animator fileImgAnimator = null;
+
+    private const string SCALE_STATE = "ScaleFileImagePrefab";
+    private readonly int scaleStateId = Animator.StringToHash(SCALE_STATE);
+    private const string DIRECTION_PARAMETER = "Direction";
+    private readonly int directionId = Animator.StringToHash(DIRECTION_PARAMETER);
+
     private string filePath = null;
+
+    [SerializeField]
+    private RectTransform modalBtn = null;
+
+    [SerializeField]
+    private RectTransform textInformation = null;
+
+    [SerializeField]
+    private AnimationCurve upScaleAnimation = null;
 
     public static event Action<Texture2D, string, string, string> OnOpenModal = delegate { };
 
@@ -45,5 +62,21 @@ public class FileImageUnityObject : MonoBehaviour
         {
             OnOpenModal((Texture2D)fileImage.texture, fileName.text, fileDate.text, filePath);
         }
+    }
+
+    public void OnPointerEnterThumbnail()
+    {
+        TweenSpeedMultiply(1);
+    }
+
+    public void OnPointerExitThumbnail()
+    {
+        TweenSpeedMultiply(-1);
+    }
+
+    private void TweenSpeedMultiply(float multiply)
+    {
+        fileImgAnimator.SetFloat(directionId, multiply);
+        fileImgAnimator.CrossFade(scaleStateId, 1, -1, 0);
     }
 }

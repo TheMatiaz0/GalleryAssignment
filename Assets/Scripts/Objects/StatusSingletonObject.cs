@@ -15,25 +15,38 @@ public class StatusSingletonObject : MonoSingleton<StatusSingletonObject>
     [SerializeField]
     private float secondsUntilErrorDisappear = 5;
 
+    // Using these because of no longer having {0} for formatting after changes
+    private string startPathText = null;
+    private string startErrorText = null;
+
+    private Coroutine desetupErrorCoroutine = null;
+
     protected void Start()
     {
-        DesetupError();
+        startPathText = basePathStatus.text;
+        startErrorText = errorStatus.text;
+        errorStatus.gameObject.SetActive(false);
     }
 
-    private void DesetupError()
+    private IEnumerator DesetupError()
     {
+        yield return new WaitForSeconds(secondsUntilErrorDisappear);
         errorStatus.gameObject.SetActive(false);
+        desetupErrorCoroutine = null;
     }
 
     public void SetupStatus(string dataPath)
     {
-        basePathStatus.text = string.Format(basePathStatus.text, Path.GetFullPath(dataPath));
+        basePathStatus.text = string.Format(startPathText, Path.GetFullPath(dataPath));
     }
 
     public void ThrowError(string errorMessage)
     {
         errorStatus.gameObject.SetActive(true);
-        errorStatus.text = errorMessage;
-        Invoke(nameof(DesetupError), secondsUntilErrorDisappear);
+        errorStatus.text = string.Format(startErrorText, errorMessage);
+        if (desetupErrorCoroutine == null)
+        {
+            desetupErrorCoroutine = StartCoroutine(DesetupError());
+        }
     }
 }

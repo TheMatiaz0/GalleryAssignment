@@ -39,7 +39,6 @@ public class MainUIHandler : MonoBehaviour
     {
         StatusSingletonObject.Instance.SetupStatus(fileImgManager.BaseDirectoryPath);
         fileImgManager.Refresh();
-
     }
 
     public void OnButtonOpenExplorerClick()
