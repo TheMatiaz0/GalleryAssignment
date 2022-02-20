@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class StatusContainer : MonoSingleton<StatusContainer>
+public class StatusSingletonObject : MonoSingleton<StatusSingletonObject>
 {
     [SerializeField]
     private Text basePathStatus = null;
@@ -26,7 +27,7 @@ public class StatusContainer : MonoSingleton<StatusContainer>
 
     public void SetupStatus(string dataPath)
     {
-        basePathStatus.text = string.Format(basePathStatus.text, dataPath);
+        basePathStatus.text = string.Format(basePathStatus.text, Path.GetFullPath(dataPath));
     }
 
     public void ThrowError(string errorMessage)

@@ -113,7 +113,7 @@ public class FileImageManager : MonoBehaviour
             return;
         }
 
-        StatusContainer.Instance.SetupStatus(BaseDirectoryPath);
+        StatusSingletonObject.Instance.SetupStatus(BaseDirectoryPath);
 
         isRefreshing = true;
 
