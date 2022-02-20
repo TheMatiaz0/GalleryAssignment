@@ -39,6 +39,8 @@ public class FileImageManager : MonoBehaviour
 
     private FileImage[] fileImgs = null;
 
+    public event Action<bool> OnRefresh = delegate { };
+
     protected void Awake()
     {
         BaseDirectoryPath = Path.Combine(Application.dataPath, chosenDirectoryName);
@@ -47,11 +49,6 @@ public class FileImageManager : MonoBehaviour
         {
             RecurseSubdirectories = true
         };
-    }
-
-    protected void Start()
-    {
-        Refresh();
     }
 
     protected void Update()
@@ -73,6 +70,12 @@ public class FileImageManager : MonoBehaviour
                    fileImgFromQueue.FileName,
                    ImageLoader.LoadTextureFromBytes(fileImgFromQueue.ImgBytes),
                    fileImgFromQueue.FileCreationDate.ToString(), fileImgFromQueue.FilePath);
+
+                // if this is the last queue object:
+                if (ConcurrentQueue.Count == 0)
+                {
+                    OnRefresh(false);
+                }
             }
         }
     }
@@ -101,11 +104,6 @@ public class FileImageManager : MonoBehaviour
 
     }
 
-    public void OpenDirectoryPath()
-    {
-        Application.OpenURL($"file://{BaseDirectoryPath}");
-    }
-
     public void Refresh()
     {
         if (isRefreshing == true || ConcurrentQueue.Count > 0)
@@ -113,9 +111,8 @@ public class FileImageManager : MonoBehaviour
             return;
         }
 
-        StatusSingletonObject.Instance.SetupStatus(BaseDirectoryPath);
-
         isRefreshing = true;
+        OnRefresh(true);
 
         if (!Directory.Exists(BaseDirectoryPath))
         {
@@ -152,11 +149,12 @@ public class FileImageManager : MonoBehaviour
             FileImageUnityObject fileImgUnityObject = Instantiate(fileImagePrefab, fileImageParent);
 
             FileImage fileImgObject = new FileImage(
-            imageData,
-            Path.GetFileNameWithoutExtension(path),
-            File.GetCreationTime(path), 
-            fileImgUnityObject,
-            path);
+                imageData,
+                Path.GetFileNameWithoutExtension(path),
+                File.GetCreationTime(path), 
+                fileImgUnityObject,
+                path
+            );
 
             fileImgUnityObject.Initialize($"({fileImgObject.FileName}, {fileImgObject.FileCreationDate})");
 
