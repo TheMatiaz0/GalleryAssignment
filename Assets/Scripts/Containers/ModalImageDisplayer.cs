@@ -46,6 +46,7 @@ public class ModalImageDisplayer : MonoBehaviour
 
     public void UnDisplay()
     {
+        openDefaultBtn.onClick.RemoveAllListeners();
         visibleParent.SetActive(false);
     }
 }
