@@ -28,15 +28,6 @@ public class FileImageUnityObject : MonoBehaviour
 
     private string filePath = null;
 
-    [SerializeField]
-    private RectTransform modalBtn = null;
-
-    [SerializeField]
-    private RectTransform textInformation = null;
-
-    [SerializeField]
-    private AnimationCurve upScaleAnimation = null;
-
     public static event Action<Texture2D, string, string, string> OnOpenModal = delegate { };
 
     public void Initialize(string fileDate)
